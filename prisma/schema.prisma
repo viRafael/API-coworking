@@ -35,7 +35,8 @@ model User {
   updateAt  DateTime @updatedAt() @map("updated_at")
 
   // Relação de 1:N com Reservas
-  reservations Reservation[]
+  reservations    Reservation[]
+  blackListTokens BlackListTokens[]
 
   @@map("users")
 }
@@ -68,6 +69,21 @@ model Reservation {
   updateAt        DateTime          @updatedAt() @map("updated_at")
 
   // Chaves estrangeiras e relações
-  User User @relation(fields: [userId], references: [id])
-  Room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  room Room @relation(fields: [roomId], references: [id])
+
+  @@map("reservations")
+}
+
+model BlackListTokens {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiredAt DateTime
+
+  // Chave estrangeira e relação
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("black_listed_tokens")
 }
