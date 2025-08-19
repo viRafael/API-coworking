@@ -7,5 +7,3 @@ export class PrismaService extends PrismaClient {
     await this.$connect();
   }
 }
-
-export const prisma = new PrismaClient();
