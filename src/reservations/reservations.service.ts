@@ -21,7 +21,7 @@ export class ReservationsService {
   }
 
   // Função para listar todas as reservar do usuario authenticado
-  getAllReservations(userID: string) {
+  getAllUserReservations(userID: string) {
     return this.prismaService.reservation.findMany({
       where: {
         id: userID,
@@ -51,7 +51,7 @@ export class ReservationsService {
   }
 
   // Função para deletar uma reserva
-  async delete(userID: string, reservationID: string) {
+  async deleteAutheticadeUser(userID: string, reservationID: string) {
     // Verificar se o user da reserva bate com o autenticado
     const reservation = await this.prismaService.reservation.findFirst({
       where: {
@@ -84,6 +84,20 @@ export class ReservationsService {
       },
       orderBy: {
         dateReservation: 'asc',
+      },
+    });
+  }
+
+  // Função para retornar todas as reservas
+  getAllReservations() {
+    return this.prismaService.reservation.findMany();
+  }
+
+  // Função para deletar
+  deleteReservationWithoutAuthenticadeUser(reservationID: string) {
+    return this.prismaService.reservation.delete({
+      where: {
+        id: reservationID,
       },
     });
   }

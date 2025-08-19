@@ -32,7 +32,7 @@ export class ReservationsController {
   @Roles('USER')
   @Get()
   getAllReservations(@User() user: TAuthenticatedUser) {
-    return this.reservationsService.getAllReservations(user.sub);
+    return this.reservationsService.getAllUserReservations(user.sub);
   }
 
   // Rota para pegar detalhes de uma reserva especifica
@@ -52,7 +52,10 @@ export class ReservationsController {
     @User() user: TAuthenticatedUser,
     @Param(':id', ParseUUIDPipe) reservationID: string,
   ) {
-    return this.reservationsService.delete(user.sub, reservationID);
+    return this.reservationsService.deleteAutheticadeUser(
+      user.sub,
+      reservationID,
+    );
   }
 
   // Rota para pegar o historico de reserva do user autenticado
