@@ -25,12 +25,17 @@ enum ReservationStatus {
   COMPLETED
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 model User {
   id        String   @id @default(uuid()) @map("id")
   name      String
   email     String   @unique
   password  String
-  isAdmin   Boolean  @default(false)
+  role      UserRole @default(USER)
   createdAt DateTime @default(now()) @map("created_at")
   updateAt  DateTime @updatedAt() @map("updated_at")
 
