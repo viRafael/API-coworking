@@ -1,21 +1,53 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { isUUID } from 'class-validator';
-import { prisma } from 'src/common/prisma/prisma.service';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { UpdateUserDTO } from './dto/updateUser.user.dto';
+import { CreateUserDTO } from './dto/createUser.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   //Implementação de toda a logicas das rotas referentes ao Usuario
+  constructor(private readonly prismaService: PrismaService) {}
 
-  // Retorna os dados do usuário autenticado.
-  async getUser(userId: string) {
-    // Verifica se a string passada é um ID
-    if (!isUUID(userId)) {
-      throw new BadRequestException('ID de usuário inválido');
+  // Função de criação de um novo usuario
+  async createUser(createUserDTO: CreateUserDTO) {
+    // Verificar se o email já está em uso
+    const userAlreadyExist = await this.prismaService.user.findUnique({
+      where: {
+        email: createUserDTO.email,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (userAlreadyExist) {
+      throw new BadRequestException('User already exist.');
     }
 
-    // Verifica se o existe esse usuario
-    const user = await prisma.user.findUnique({
+    // Hash na senha dele
+    const hashedPassword = await bcrypt.hash(createUserDTO.password, 10);
+
+    // Cria a instancia do usuario e retorna
+    return this.prismaService.user.create({
+      data: {
+        name: createUserDTO.name,
+        email: createUserDTO.email,
+        password: hashedPassword,
+      },
+      omit: {
+        password: true,
+      },
+    });
+  }
+
+  // Retorna os dados do usuário autenticado.
+  async getById(userId: string) {
+    return this.prismaService.user.findUnique({
       where: {
         id: userId,
       },
@@ -23,45 +55,30 @@ export class UserService {
         password: true,
       },
     });
-
-    if (!user) {
-      throw new BadRequestException('Não existe usuario com esse ID');
-    }
-
-    return user;
   }
 
   // Atualiza os dados do usuário autenticado
-  async updateUser(id: string, updatedUser: UpdateUserDTO) {
-    // Verifica se a string passada é um ID
-    if (isUUID(id)) {
-      throw new BadRequestException('ID de usuário inválido');
-    }
-
+  async update(id: string, updatedUser: UpdateUserDTO) {
     // Verifica se há um usuario com esse ID
-    const oldUser = await prisma.user.findFirst({
+    const oldUser = await this.prismaService.user.findUnique({
       where: {
         id,
       },
     });
 
     if (!oldUser) {
-      throw new BadRequestException('Não existe usuário com esse ID');
+      throw new NotFoundException('Não existe usuário com esse ID');
     }
 
     // Atualiza o usuario
-    try {
-      return await prisma.user.update({
-        where: {
-          id,
-        },
-        data: {
-          ...updatedUser,
-          updateAt: new Date(),
-        },
-      });
-    } catch (error) {
-      throw new BadRequestException(error, 'Error ao atualizar o usuário');
-    }
+    return await this.prismaService.user.update({
+      where: {
+        id,
+      },
+      data: {
+        ...updatedUser,
+        updateAt: new Date(),
+      },
+    });
   }
 }
