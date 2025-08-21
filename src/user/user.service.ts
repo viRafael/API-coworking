@@ -81,4 +81,16 @@ export class UserService {
       },
     });
   }
+
+  // Função para resetar senha
+  async updatePassword(email: string, newPassword: string) {
+    return this.prismaService.user.update({
+      where: {
+        email: email,
+      },
+      data: {
+        password: newPassword,
+      },
+    });
+  }
 }
