@@ -85,7 +85,6 @@ model BlackListTokens {
   userId    String
   token     String   @unique
   createdAt DateTime @default(now())
-  expiredAt DateTime
 
   // Chave estrangeira e relação
   user User @relation(fields: [userId], references: [id])
