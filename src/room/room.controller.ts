@@ -51,6 +51,7 @@ export class RoomController {
 
   @Public()
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obter detalhes de uma sala específica' })
   @ApiResponse({
     status: 200,

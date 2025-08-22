@@ -29,6 +29,7 @@ export class ReservationsController {
   // Rota de criação de uma reserva
   @Roles('USER')
   @Post()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar uma nova reserva' })
   @ApiResponse({ status: 201, description: 'Reserva criada com sucesso.' })
   @ApiResponse({
@@ -46,6 +47,7 @@ export class ReservationsController {
   // Rota para listar todas as rotas do usuario authenticado
   @Roles('USER')
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar todas as reservas do usuário autenticado' })
   @ApiResponse({
     status: 200,
@@ -59,6 +61,7 @@ export class ReservationsController {
   // Rota para pegar detalhes de uma reserva especifica
   @Roles('USER')
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obter detalhes de uma reserva específica' })
   @ApiResponse({
     status: 200,
@@ -76,6 +79,7 @@ export class ReservationsController {
   // Rota para cancelar um reserva do usuario autenticado(se faltarem mais de 24horas)
   @Roles('USER')
   @Delete(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancelar uma reserva' })
   @ApiResponse({ status: 200, description: 'Reserva cancelada com sucesso.' })
   @ApiResponse({
@@ -98,6 +102,7 @@ export class ReservationsController {
   // Rota para pegar o historico de reserva do user autenticado
   @Roles('USER')
   @Get('history')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obter histórico de reservas do usuário' })
   @ApiResponse({
     status: 200,
