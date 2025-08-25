@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -51,7 +50,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new BadRequestException('Email ou Senha inválidas');
+      throw new UnauthorizedException('Email ou Senha inválidas');
     }
 
     // Criamos os tokens
@@ -84,7 +83,7 @@ export class AuthService {
           role: role,
         },
         {
-          expiresIn: '15min',
+          expiresIn: '7d',
         },
       ),
     ]);
@@ -125,7 +124,7 @@ export class AuthService {
       { expiresIn: '5m' },
     );
 
-    this.mailService.sendPasswordResetEmail(
+    await this.mailService.sendPasswordResetEmail(
       requestResetPasswordDTO.email,
       token,
     );

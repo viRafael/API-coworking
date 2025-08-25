@@ -24,7 +24,7 @@ export class ReservationsService {
   getAllUserReservations(userID: string) {
     return this.prismaService.reservation.findMany({
       where: {
-        id: userID,
+        userId: userID,
       },
     });
   }
@@ -80,7 +80,7 @@ export class ReservationsService {
   async getHistory(userId: string) {
     return this.prismaService.reservation.findMany({
       where: {
-        userId,
+        userId: userId,
       },
       orderBy: {
         dateReservation: 'asc',

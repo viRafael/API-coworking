@@ -25,6 +25,12 @@ class EnvironmentVariables {
 
   @IsString()
   MAIL_PASSWORD: string;
+
+  @IsString()
+  MAIL_FROM_NAME: string;
+
+  @IsString()
+  MAIL_FROM_EMAIL: string;
 }
 
 const envVars = plainToInstance(EnvironmentVariables, {
@@ -36,6 +42,8 @@ const envVars = plainToInstance(EnvironmentVariables, {
   MAIL_PORT: Number(process.env.MAIL_PORT),
   MAIL_USER: process.env.MAIL_USER,
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
+  MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
+  MAIL_FROM_EMAIL: process.env.MAIL_FROM_EMAIL,
 });
 
 const errors = validateSync(envVars, {

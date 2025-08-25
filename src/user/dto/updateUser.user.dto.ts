@@ -8,7 +8,7 @@ export class UpdateUserDTO {
   })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name?: string;
 
   @ApiProperty({
     description: 'Email so usuario, será usado como identificador unico',
@@ -17,7 +17,7 @@ export class UpdateUserDTO {
   @IsString()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiProperty({
     description: 'Senha de identificação do usuario',
@@ -25,5 +25,5 @@ export class UpdateUserDTO {
   })
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password?: string;
 }

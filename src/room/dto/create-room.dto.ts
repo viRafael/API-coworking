@@ -15,7 +15,6 @@ export class CreateRoomDTO {
     description: 'Informações extras da sala ',
     example: 'Quarto com banheiro extendido',
   })
-  @IsNotEmpty()
   @IsString()
   description: string;
 

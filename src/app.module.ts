@@ -5,19 +5,17 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { RoomModule } from './room/room.module';
 import { ReservationsModule } from './reservations/reservations.module';
-import { JwtModule } from '@nestjs/jwt';
-import { env } from 'process';
+import { AdminModule } from './admin/admin.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     UserModule,
     RoomModule,
     ReservationsModule,
-    JwtModule.register({
-      global: true,
-      secret: env.JWT_SECRET,
-    }),
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

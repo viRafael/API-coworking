@@ -58,6 +58,20 @@ export class ReservationsController {
     return this.reservationsService.getAllUserReservations(user.sub);
   }
 
+  // Rota para pegar o historico de reserva do user autenticado
+  @Roles('USER')
+  @Get('history')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obter histórico de reservas do usuário' })
+  @ApiResponse({
+    status: 200,
+    description: 'Histórico de reservas retornado com sucesso.',
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  getHistory(@User() user: TAuthenticatedUser) {
+    return this.reservationsService.getHistory(user.sub);
+  }
+
   // Rota para pegar detalhes de uma reserva especifica
   @Roles('USER')
   @Get(':id')
@@ -97,19 +111,5 @@ export class ReservationsController {
       user.sub,
       reservationID,
     );
-  }
-
-  // Rota para pegar o historico de reserva do user autenticado
-  @Roles('USER')
-  @Get('history')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Obter histórico de reservas do usuário' })
-  @ApiResponse({
-    status: 200,
-    description: 'Histórico de reservas retornado com sucesso.',
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  getHistory(@User() user: TAuthenticatedUser) {
-    return this.reservationsService.getHistory(user.sub);
   }
 }
