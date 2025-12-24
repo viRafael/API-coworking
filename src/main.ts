@@ -1,10 +1,8 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import 'reflect-metadata';
-import { AppModule } from './app.module';
+import { AppModule } from './app/app.module';
 import { env } from './utils/env-validator';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ValidationPipe } from '@nestjs/common';
-import { RolesGuard } from './auth/guards/role-auth.guard';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -19,9 +17,6 @@ async function bootstrap() {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
-
-  const reflector = app.get(Reflector);
-  app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -39,7 +34,7 @@ async function bootstrap() {
 bootstrap()
   .then(() => {
     console.log(
-      `[PROJETO FINAL]: Servidor rodando em: http://localhost:${env.PORT}\n` +
+      `\n[PROJETO FINAL]: Servidor rodando em: http://localhost:${env.PORT}\n` +
         `Documentação Swagger rodando em: http://localhost:${env.PORT}/api`,
     );
   })

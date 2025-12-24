@@ -5,8 +5,12 @@ dotenv.config();
 
 interface EnvVars {
   PORT: number;
-  JWT_SECRET: string;
   DATABASE_URL: string;
+
+  JWT_SECRET: string;
+  JWT_TOKEN_AUDIENCE: string;
+  JWT_TOKEN_ISSUER: string;
+  JWT_TTL: number;
 
   MAIL_HOST: string;
   MAIL_PORT: number;
@@ -18,8 +22,11 @@ interface EnvVars {
 
 const envSchema = Joi.object<EnvVars>({
   PORT: Joi.number().port().default(3000),
-  JWT_SECRET: Joi.string().required(),
   DATABASE_URL: Joi.string().uri().required(),
+  JWT_SECRET: Joi.string().required(),
+  JWT_TOKEN_AUDIENCE: Joi.string().uri().required(),
+  JWT_TOKEN_ISSUER: Joi.string().uri().required(),
+  JWT_TTL: Joi.number().required(),
   MAIL_HOST: Joi.string().hostname().required(),
   MAIL_PORT: Joi.number().port().required(),
   MAIL_USER: Joi.string().email().required(),

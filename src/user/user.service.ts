@@ -6,12 +6,15 @@ import {
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { UpdateUserDTO } from './dto/updateUser.user.dto';
 import { CreateUserDTO } from './dto/createUser.dto';
-import * as bcrypt from 'bcrypt';
+import { HashingService } from 'src/auth/hashing/hashing.service';
 
 @Injectable()
 export class UserService {
   //Implementação de toda a logicas das rotas referentes ao Usuario
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly hashingService: HashingService,
+  ) {}
 
   // Função de criação de um novo usuario
   async createUser(createUserDTO: CreateUserDTO) {
@@ -30,7 +33,9 @@ export class UserService {
     }
 
     // Hash na senha dele
-    const hashedPassword = await bcrypt.hash(createUserDTO.password, 10);
+    const hashedPassword = await this.hashingService.hash(
+      createUserDTO.password,
+    );
 
     // Cria a instancia do usuario e retorna
     return this.prismaService.user.create({
@@ -70,6 +75,13 @@ export class UserService {
       throw new NotFoundException('Não existe usuário com esse ID');
     }
 
+    if (updatedUser?.password) {
+      const hashedPassword = await this.hashingService.hash(
+        updatedUser.password,
+      );
+      updatedUser.password = hashedPassword;
+    }
+
     // Atualiza o usuario
     return await this.prismaService.user.update({
       where: {
@@ -90,6 +102,15 @@ export class UserService {
       },
       data: {
         password: newPassword,
+      },
+    });
+  }
+
+  // Retorna o usuario pelo email
+  async getByEmail(email: string) {
+    return this.prismaService.user.findUnique({
+      where: {
+        email: email,
       },
     });
   }

@@ -1,155 +1,58 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { LoginDTO } from './dto/loginUser.auth.dto';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { LoginDto } from './dto/login.dto';
 import { UserService } from 'src/user/user.service';
-import { CreateUserDTO } from 'src/user/dto/createUser.dto';
-import { UserRole } from '@prisma/client';
-import { MailService } from 'src/common/mail/mail.service';
-import { RequestResetPasswordDTO } from './dto/requestResetPassword.dto';
-import { ResetPasswordDTO } from './dto/resetPassword.dto';
-import { env } from 'src/utils/env-validator';
+import { HashingService } from './hashing/hashing.service';
+import jwtConfig from './config/jwt.config';
+import type { ConfigType } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly prismaService: PrismaService,
     private readonly userService: UserService,
-    private readonly mailService: MailService,
+    private readonly hashsingService: HashingService,
+    @Inject(jwtConfig.KEY)
+    private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+    private readonly jwtService: JwtService,
   ) {}
 
-  // Registro de usuario
-  async register(createUserDTO: CreateUserDTO) {
-    return this.userService.createUser(createUserDTO);
-  }
+  async login(loginDto: LoginDto) {
+    let passwordIsValid = false;
 
-  // Rota de login e geração do token JWT
-  async login(loginDTO: LoginDTO) {
-    // Verifica se o email existe no BD
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        email: loginDTO.email,
-      },
-    });
+    // Verifico se há um usuario com esse email
+    const user = await this.userService.getByEmail(loginDto.email);
 
-    if (!user) {
-      throw new UnauthorizedException('Email ou Senha inválidas');
+    // Verifico se a senha bate
+    if (user) {
+      passwordIsValid = await this.hashsingService.compare(
+        loginDto.password,
+        user.password,
+      );
     }
 
-    // Verifica se a senha passada e igual ao do BD
-    const isPasswordValid = await bcrypt.compare(
-      loginDTO.password,
-      user.password,
-    );
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Email ou Senha inválidas');
+    if (!passwordIsValid || !user) {
+      throw new UnauthorizedException('Email or password invalid');
     }
 
-    // Criamos os tokens
-    const { accessToken, refreshToken } = await this.generateTokens(
-      user.id,
-      user.role,
-    );
+    const acessToken = await this.generateAcessToken(user.id, user.email);
 
     return {
-      accessToken,
-      refreshToken,
+      acessToken,
     };
   }
 
-  // Função para Geração de Tokens
-  async generateTokens(userId: string, role: UserRole = UserRole.USER) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        {
-          sub: userId,
-          role: role,
-        },
-        {
-          expiresIn: '15min',
-        },
-      ),
-      this.jwtService.signAsync(
-        {
-          sub: userId,
-          role: role,
-        },
-        {
-          expiresIn: '7d',
-        },
-      ),
-    ]);
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-
-  // Rota para logout
-  async logout(userID: string, token: string) {
-    return await this.prismaService.blackListTokens.create({
-      data: {
-        userId: userID,
-        token: token,
+  async generateAcessToken(userId: string, email: string) {
+    return await this.jwtService.signAsync(
+      {
+        sub: userId,
+        email: email,
       },
-    });
-  }
-
-  async sendForgetPasswordEmail(
-    requestResetPasswordDTO: RequestResetPasswordDTO,
-  ) {
-    // Verificamos se existe um user com esse email
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        email: requestResetPasswordDTO.email,
+      {
+        audience: this.jwtConfiguration.audience,
+        issuer: this.jwtConfiguration.issuer,
+        secret: this.jwtConfiguration.secret,
+        expiresIn: this.jwtConfiguration.jwtTtl,
       },
-    });
-
-    if (!user) {
-      throw new NotFoundException('Email não encontrado');
-    }
-
-    // Enviamos o email
-    const token = this.jwtService.sign(
-      { sub: requestResetPasswordDTO.email, iss: 'reset-password' },
-      { expiresIn: '5m' },
     );
-
-    await this.mailService.sendPasswordResetEmail(
-      requestResetPasswordDTO.email,
-      token,
-    );
-
-    return {
-      message: 'Password reset email send successfully',
-    };
-  }
-
-  // Função para redefinir a senha do usuario
-  async resetPassword(token: string, resetPasswordDTO: ResetPasswordDTO) {
-    try {
-      const tokenPayload = await this.jwtService.verify<
-        Promise<{ sub: string }>
-      >(token, {
-        secret: env.JWT_SECRET,
-        issuer: 'reset-password',
-        ignoreExpiration: false,
-      });
-
-      const hashedPassword = await bcrypt.hash(resetPasswordDTO.password, 10);
-
-      await this.userService.updatePassword(tokenPayload.sub, hashedPassword);
-    } catch {
-      throw new ForbiddenException('Invalid or expired reset password token');
-    }
   }
 }
