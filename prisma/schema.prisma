@@ -31,7 +31,7 @@ enum UserRole {
 }
 
 model User {
-  id        String   @id @default(uuid()) @map("id")
+  id        String   @id @default(uuid())
   name      String
   email     String   @unique
   password  String
@@ -47,7 +47,7 @@ model User {
 }
 
 model Room {
-  id          String     @id @default(uuid()) @map("id")
+  id          String     @id @default(uuid()) 
   name        String
   description String
   status      RoomStatus @default(AVAILABLE)
@@ -61,7 +61,7 @@ model Room {
 }
 
 model Reservation {
-  id              String            @id @default(uuid()) @map("id")
+  id              String            @id @default(uuid())
   userId          String            @map("user_id")
   roomId          String            @map("room_id")
   name            String

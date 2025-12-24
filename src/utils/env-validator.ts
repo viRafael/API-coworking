@@ -1,58 +1,46 @@
 import dotenv from 'dotenv';
-import { IsNumber, IsString, validateSync } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
+import * as Joi from '@hapi/joi';
 
 dotenv.config();
 
-class EnvironmentVariables {
-  @IsNumber()
+interface EnvVars {
   PORT: number;
-
-  @IsString()
   JWT_SECRET: string;
-
-  @IsString()
   DATABASE_URL: string;
 
-  @IsString()
   MAIL_HOST: string;
-
-  @IsNumber()
   MAIL_PORT: number;
-
-  @IsString()
   MAIL_USER: string;
-
-  @IsString()
   MAIL_PASSWORD: string;
-
-  @IsString()
   MAIL_FROM_NAME: string;
-
-  @IsString()
   MAIL_FROM_EMAIL: string;
 }
 
-const envVars = plainToInstance(EnvironmentVariables, {
-  PORT: Number(process.env.PORT),
-  JWT_SECRET: process.env.JWT_SECRET,
-  DATABASE_URL: process.env.DATABASE_URL,
+const envSchema = Joi.object<EnvVars>({
+  PORT: Joi.number().port().default(3000),
+  JWT_SECRET: Joi.string().required(),
+  DATABASE_URL: Joi.string().uri().required(),
+  MAIL_HOST: Joi.string().hostname().required(),
+  MAIL_PORT: Joi.number().port().required(),
+  MAIL_USER: Joi.string().email().required(),
+  MAIL_PASSWORD: Joi.string().min(6).required(),
+  MAIL_FROM_NAME: Joi.string().required(),
+  MAIL_FROM_EMAIL: Joi.string().email().required(),
+})
+  .unknown(true) // Permite outras variáveis de ambiente
+  .required();
 
-  MAIL_HOST: process.env.MAIL_HOST,
-  MAIL_PORT: Number(process.env.MAIL_PORT),
-  MAIL_USER: process.env.MAIL_USER,
-  MAIL_PASSWORD: process.env.MAIL_PASSWORD,
-  MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
-  MAIL_FROM_EMAIL: process.env.MAIL_FROM_EMAIL,
+const validationResult = envSchema.validate(process.env, {
+  abortEarly: false,
+  convert: true,
 });
 
-const errors = validateSync(envVars, {
-  skipMissingProperties: false,
-});
-
-if (errors.length > 0) {
-  console.error('❌ Erro nas variáveis de ambiente:', errors);
+if (validationResult.error) {
+  const errorMessages = validationResult.error.details
+    .map((detail) => detail.message)
+    .join('\n');
+  console.error('❌ Erro nas variáveis de ambiente:\n', errorMessages);
   process.exit(1);
 }
 
-export const env = envVars;
+export const env = validationResult.value as EnvVars;

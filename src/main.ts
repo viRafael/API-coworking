@@ -22,19 +22,24 @@ async function bootstrap() {
 
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
+
   app.useGlobalPipes(
     new ValidationPipe({
       forbidNonWhitelisted: true,
+      whitelist: true,
       transform: true,
     }),
   );
 
+  app.enableCors();
+
   await app.listen(env.PORT);
 }
+
 bootstrap()
   .then(() => {
     console.log(
-      `🤖 [PROJETO FINAL]: Servidor rodando em: http://localhost:${env.PORT}\n` +
+      `[PROJETO FINAL]: Servidor rodando em: http://localhost:${env.PORT}\n` +
         `Documentação Swagger rodando em: http://localhost:${env.PORT}/api`,
     );
   })
