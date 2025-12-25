@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,6 +8,7 @@ import { PrismaService } from 'src/common/prisma/prisma.service';
 import { UpdateUserDTO } from './dto/updateUser.user.dto';
 import { CreateUserDTO } from './dto/createUser.dto';
 import { HashingService } from 'src/auth/hashing/hashing.service';
+import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 
 @Injectable()
 export class UserService {
@@ -63,7 +65,11 @@ export class UserService {
   }
 
   // Atualiza os dados do usuário autenticado
-  async update(id: string, updatedUser: UpdateUserDTO) {
+  async update(
+    id: string,
+    updatedUser: UpdateUserDTO,
+    tokenPayload: TokenPayloadDto,
+  ) {
     // Verifica se há um usuario com esse ID
     const oldUser = await this.prismaService.user.findUnique({
       where: {
@@ -80,6 +86,11 @@ export class UserService {
         updatedUser.password,
       );
       updatedUser.password = hashedPassword;
+    }
+
+    // Verifica se o user logado(payload) é o mesmo do que está sendo atualizado
+    if (tokenPayload.sub !== id) {
+      throw new ForbiddenException('User logado não pode atualizar outro user');
     }
 
     // Atualiza o usuario
@@ -111,6 +122,20 @@ export class UserService {
     return this.prismaService.user.findUnique({
       where: {
         email: email,
+      },
+    });
+  }
+
+  // Deleta o Usuario
+  delete(idUser: string, tokenPayload: TokenPayloadDto) {
+    // Verifica se o user logado(payload) é o mesmo do que está sendo atualizado
+    if (tokenPayload.sub !== idUser) {
+      throw new ForbiddenException('User logado não pode atualizar outro user');
+    }
+
+    return this.prismaService.user.delete({
+      where: {
+        id: idUser,
       },
     });
   }

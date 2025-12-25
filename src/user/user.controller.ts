@@ -1,14 +1,19 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
 import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
-import { User } from '@prisma/client';
 import { UpdateUserDTO } from './dto/updateUser.user.dto';
 import { Roles } from 'src/common/decorators/role.decoretor';
+import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
+import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
+import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -18,30 +23,38 @@ export class UserController {
   //Implementação de todas as rotas referentes ao Usuario
   constructor(private readonly userService: UserService) {}
 
-  // // Retorna os dados do usuário autenticado.
-  // @Get('me')
-  // @ApiOperation({ summary: 'Obter dados do usuário autenticado' })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Dados do usuário retornados com sucesso.',
-  // })
-  // @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  // getUser(@UserDecorator() user: TAuthenticatedUser) {
-  //   return this.userService.getById(user.sub);
-  // }
+  // Rota para buscar um user pelo ID
+  @UseGuards(AuthTokenGuard)
+  @Get('me')
+  getUserById(@Param(':id') userId: string) {
+    return this.userService.getById(userId);
+  }
 
-  // // Atualiza os dados do usuário autenticado
-  // @Put('me')
-  // @ApiOperation({ summary: 'Atualizar dados do usuário autenticado' })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Dados do usuário atualizados com sucesso.',
-  // })
-  // @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  // updateUser(
-  //   @UserDecorator() user: TAuthenticatedUser,
-  //   @Body() updatedUserDTO: UpdateUserDTO,
-  // ): Promise<User> {
-  //   return this.userService.update(user.sub, updatedUserDTO);
-  // }
+  // Rota para buscar um user pelo Email
+  @UseGuards(AuthTokenGuard)
+  @Get('me')
+  getUserByEmail(@Param(':email') email: string) {
+    return this.userService.getByEmail(email);
+  }
+
+  // Rota para atualizar o user
+  @UseGuards(AuthTokenGuard)
+  @Put('me')
+  updateUser(
+    @Param(':id') userId: string,
+    @Body() updateUserDto: UpdateUserDTO,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+  ) {
+    return this.userService.update(userId, updateUserDto, tokenPayload);
+  }
+
+  // Rota para deletar um user
+  @UseGuards(AuthTokenGuard)
+  @Delete(':id')
+  deleteUser(
+    @Param(':id') userId: string,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+  ) {
+    return this.userService.delete(userId, tokenPayload);
+  }
 }

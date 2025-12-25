@@ -1,10 +1,17 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { UserService } from 'src/user/user.service';
 import { HashingService } from './hashing/hashing.service';
 import jwtConfig from './config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { RegisterDto } from './dto/register.dto';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +21,7 @@ export class AuthService {
     @Inject(jwtConfig.KEY)
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
     private readonly jwtService: JwtService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -54,5 +62,21 @@ export class AuthService {
         expiresIn: this.jwtConfiguration.jwtTtl,
       },
     );
+  }
+
+  async register(registerDto: RegisterDto) {
+    // Verifico se já existe um User com esse email
+    const existUser = await this.prismaService.user.findUnique({
+      where: {
+        email: registerDto.email,
+      },
+    });
+
+    if (existUser) {
+      throw new ForbiddenException('Email already in use');
+    }
+
+    // Cria a instancia
+    return this.userService.createUser(registerDto);
   }
 }
