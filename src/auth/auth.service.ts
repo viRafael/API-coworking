@@ -18,6 +18,8 @@ import { env } from 'process';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { MailService } from 'src/common/mail/mail.service';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +32,37 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly mailService: MailService,
   ) {}
+
+  private async generateToken<T>(sub: string, expiresIn: number, payload?: T) {
+    return await this.jwtService.signAsync(
+      {
+        sub,
+        ...payload,
+      },
+      {
+        audience: this.jwtConfiguration.audience,
+        issuer: this.jwtConfiguration.issuer,
+        secret: this.jwtConfiguration.secret,
+        expiresIn: expiresIn,
+      },
+    );
+  }
+
+  async register(registerDto: RegisterDto) {
+    // Verifico se já existe um User com esse email
+    const existUser = await this.prismaService.user.findUnique({
+      where: {
+        email: registerDto.email,
+      },
+    });
+
+    if (existUser) {
+      throw new ForbiddenException('Email already in use');
+    }
+
+    // Cria a instancia
+    return this.userService.createUser(registerDto);
+  }
 
   async login(loginDto: LoginDto) {
     let passwordIsValid = false;
@@ -49,42 +82,21 @@ export class AuthService {
       throw new UnauthorizedException('Email or password invalid');
     }
 
-    const acessToken = await this.generateAcessToken(user.id, user.email);
+    const accesToken = await this.generateToken<Partial<User>>(
+      user.id,
+      this.jwtConfiguration.jwtTtl,
+      { email: user.email },
+    );
+
+    const refreshToken = await this.generateToken<Partial<User>>(
+      user.id,
+      this.jwtConfiguration.jwtRefreshTtl,
+    );
 
     return {
-      acessToken,
+      accesToken,
+      refreshToken,
     };
-  }
-
-  async generateAcessToken(userId: string, email: string) {
-    return await this.jwtService.signAsync(
-      {
-        sub: userId,
-        email: email,
-      },
-      {
-        audience: this.jwtConfiguration.audience,
-        issuer: this.jwtConfiguration.issuer,
-        secret: this.jwtConfiguration.secret,
-        expiresIn: this.jwtConfiguration.jwtTtl,
-      },
-    );
-  }
-
-  async register(registerDto: RegisterDto) {
-    // Verifico se já existe um User com esse email
-    const existUser = await this.prismaService.user.findUnique({
-      where: {
-        email: registerDto.email,
-      },
-    });
-
-    if (existUser) {
-      throw new ForbiddenException('Email already in use');
-    }
-
-    // Cria a instancia
-    return this.userService.createUser(registerDto);
   }
 
   async logout(tokenPayload: TokenPayloadDto, token: string) {
@@ -129,9 +141,7 @@ export class AuthService {
   // Função para redefinir a senha do usuario
   async resetPassword(token: string, resetPasswordDTO: ResetPasswordDTO) {
     try {
-      const tokenPayload = await this.jwtService.verify<
-        Promise<{ sub: string }>
-      >(token, {
+      const tokenPayload = this.jwtService.verify<{ sub: string }>(token, {
         secret: env.JWT_SECRET,
         issuer: 'reset-password',
         ignoreExpiration: false,
@@ -144,6 +154,43 @@ export class AuthService {
       await this.userService.updatePassword(tokenPayload.sub, hashedPassword);
     } catch {
       throw new ForbiddenException('Invalid or expired reset password token');
+    }
+  }
+
+  async refreshTokens(refreshTokens: RefreshTokenDto) {
+    try {
+      const payload = await this.jwtService.verifyAsync<TokenPayloadDto>(
+        refreshTokens.refreshToken,
+        this.jwtConfiguration,
+      );
+
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: payload.sub,
+        },
+      });
+
+      if (!user) {
+        throw new Error('Pessoa não encontrada');
+      }
+
+      const accesToken = await this.generateToken<Partial<User>>(
+        user.id,
+        this.jwtConfiguration.jwtTtl,
+        { email: user.email },
+      );
+
+      const refreshToken = await this.generateToken<Partial<User>>(
+        user.id,
+        this.jwtConfiguration.jwtRefreshTtl,
+      );
+
+      return {
+        accesToken,
+        refreshToken,
+      };
+    } catch (error) {
+      throw new UnauthorizedException(error);
     }
   }
 }

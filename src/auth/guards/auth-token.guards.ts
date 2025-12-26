@@ -10,6 +10,7 @@ import { Request } from 'express';
 import jwtConfig from '../config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { REQUEST_TOKEN_PAYLOAD_KEY } from '../auth.constants';
+import { TokenPayloadDto } from '../dto/token-payload.dto';
 
 @Injectable()
 export class AuthTokenGuard implements CanActivate {
@@ -28,12 +29,10 @@ export class AuthTokenGuard implements CanActivate {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const payload = await this.jwtService.verifyAsync(
+      const payload = await this.jwtService.verifyAsync<TokenPayloadDto>(
         token,
         this.jwtConfiguration,
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       request[REQUEST_TOKEN_PAYLOAD_KEY] = payload;
     } catch (error) {
       console.log(error);

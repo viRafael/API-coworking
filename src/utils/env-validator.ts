@@ -11,6 +11,7 @@ interface EnvVars {
   JWT_TOKEN_AUDIENCE: string;
   JWT_TOKEN_ISSUER: string;
   JWT_TTL: number;
+  JWT_REFRESH_TTL: number;
 
   MAIL_HOST: string;
   MAIL_PORT: number;
@@ -27,6 +28,7 @@ const envSchema = Joi.object<EnvVars>({
   JWT_TOKEN_AUDIENCE: Joi.string().uri().required(),
   JWT_TOKEN_ISSUER: Joi.string().uri().required(),
   JWT_TTL: Joi.number().required(),
+  JWT_REFRESH_TTL: Joi.number().required(),
   MAIL_HOST: Joi.string().hostname().required(),
   MAIL_PORT: Joi.number().port().required(),
   MAIL_USER: Joi.string().email().required(),

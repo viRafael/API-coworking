@@ -13,6 +13,7 @@ import { TokenPayloadParam } from './params/token-payload.param';
 import { TokenPayloadDto } from './dto/token-payload.dto';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -55,5 +56,10 @@ export class AuthController {
     @Body() resetPasswordDTO: ResetPasswordDTO,
   ) {
     return this.authService.resetPassword(token, resetPasswordDTO);
+  }
+
+  @Post('refresh')
+  refreshTokens(@Body() refreshTokens: RefreshTokenDto) {
+    return this.authService.refreshTokens(refreshTokens);
   }
 }
