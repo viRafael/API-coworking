@@ -5,53 +5,48 @@ import {
 } from '@nestjs/common';
 import { CreateReservationDTO } from './dto/create-reservation';
 import { PrismaService } from 'src/common/prisma/prisma.service';
+import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 
 @Injectable()
 export class ReservationsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   // Rota de criar uma reserva no BD
-  async create(userId: string, createReservationsDTO: CreateReservationDTO) {
+  async create(
+    createReservationsDTO: CreateReservationDTO,
+    tokenPayload: TokenPayloadDto,
+  ) {
     return await this.prismaService.reservation.create({
       data: {
-        userId: userId,
+        userId: tokenPayload.sub,
         ...createReservationsDTO,
       },
     });
   }
 
   // Função para listar todas as reservar do usuario authenticado
-  getAllUserReservations(userID: string) {
+  getAllUserReservations(tokenPayload: TokenPayloadDto) {
     return this.prismaService.reservation.findMany({
       where: {
-        userId: userID,
+        userId: tokenPayload.sub,
       },
     });
   }
 
-  // Função para listar uma refeição espeficifica
-  async getByID(userID: string, reservationID: string) {
-    // Verificamos existe essa reserva
-    const reservation = await this.prismaService.reservation.findUnique({
+  // Função para listar uma reserva espeficifica
+  getByID(reservationID: string) {
+    return this.prismaService.reservation.findUnique({
       where: {
         id: reservationID,
       },
     });
-
-    if (!reservation) {
-      throw new NotFoundException('Reserva não encontrada');
-    }
-    // Verificamos se a reserva é do user autenticado
-    if (reservation.userId != userID) {
-      throw new UnauthorizedException('Essa reserva não é desse usuario');
-    }
-
-    // Retornamos
-    return reservation;
   }
 
   // Função para deletar uma reserva
-  async deleteAutheticadeUser(userID: string, reservationID: string) {
+  async deleteAutheticadeUser(
+    tokenPayload: TokenPayloadDto,
+    reservationID: string,
+  ) {
     // Verificar se o user da reserva bate com o autenticado
     const reservation = await this.prismaService.reservation.findFirst({
       where: {
@@ -64,7 +59,7 @@ export class ReservationsService {
       throw new NotFoundException('Reserva não encontrada');
     }
 
-    if (reservation?.userId != userID) {
+    if (reservation?.userId != tokenPayload.sub) {
       throw new UnauthorizedException('Reserva não pertence ao usuario');
     }
 
@@ -77,10 +72,10 @@ export class ReservationsService {
   }
 
   // Função para gerar um historico das reservas do usuario autenticado
-  async getHistory(userId: string) {
+  async getHistory(tokenPayload: TokenPayloadDto) {
     return this.prismaService.reservation.findMany({
       where: {
-        userId: userId,
+        userId: tokenPayload.sub,
       },
       orderBy: {
         dateReservation: 'asc',
@@ -89,12 +84,43 @@ export class ReservationsService {
   }
 
   // Função para retornar todas as reservas
-  getAllReservations() {
+  async getAllReservations(tokenPayload: TokenPayloadDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: tokenPayload.sub,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User authenticado não encontrado');
+    }
+
+    if (user.role !== 'ADMIN') {
+      throw new UnauthorizedException('User authenticado não é ADMIN');
+    }
+
     return this.prismaService.reservation.findMany();
   }
 
   // Função para deletar
-  deleteReservationWithoutAuthenticadeUser(reservationID: string) {
+  async deleteReservationWithoutAuthenticadeUser(
+    reservationID: string,
+    tokenPayload: TokenPayloadDto,
+  ) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: tokenPayload.sub,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User authenticado não encontrado');
+    }
+
+    if (user.role !== 'ADMIN') {
+      throw new UnauthorizedException('User authenticado não é ADMIN');
+    }
+
     return this.prismaService.reservation.delete({
       where: {
         id: reservationID,

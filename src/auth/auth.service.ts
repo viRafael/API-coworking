@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
@@ -12,6 +13,11 @@ import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
+import { TokenPayloadDto } from './dto/token-payload.dto';
+import { env } from 'process';
+import { ResetPasswordDTO } from './dto/reset-password.dto';
+import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
+import { MailService } from 'src/common/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +28,7 @@ export class AuthService {
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
     private readonly jwtService: JwtService,
     private readonly prismaService: PrismaService,
+    private readonly mailService: MailService,
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -78,5 +85,65 @@ export class AuthService {
 
     // Cria a instancia
     return this.userService.createUser(registerDto);
+  }
+
+  async logout(tokenPayload: TokenPayloadDto, token: string) {
+    return await this.prismaService.blackListTokens.create({
+      data: {
+        userId: tokenPayload.sub,
+        token: token,
+      },
+    });
+  }
+
+  async sendForgetPasswordEmail(
+    requestResetPasswordDTO: RequestResetPasswordDto,
+  ) {
+    // Verificamos se existe um user com esse email
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: requestResetPasswordDTO.email,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Email não encontrado');
+    }
+
+    // Enviamos o email
+    const token = this.jwtService.sign(
+      { sub: requestResetPasswordDTO.email, iss: 'reset-password' },
+      { expiresIn: '5m' },
+    );
+
+    await this.mailService.sendPasswordResetEmail(
+      requestResetPasswordDTO.email,
+      token,
+    );
+
+    return {
+      message: 'Password reset email send successfully',
+    };
+  }
+
+  // Função para redefinir a senha do usuario
+  async resetPassword(token: string, resetPasswordDTO: ResetPasswordDTO) {
+    try {
+      const tokenPayload = await this.jwtService.verify<
+        Promise<{ sub: string }>
+      >(token, {
+        secret: env.JWT_SECRET,
+        issuer: 'reset-password',
+        ignoreExpiration: false,
+      });
+
+      const hashedPassword = await this.hashsingService.hash(
+        resetPasswordDTO.password,
+      );
+
+      await this.userService.updatePassword(tokenPayload.sub, hashedPassword);
+    } catch {
+      throw new ForbiddenException('Invalid or expired reset password token');
+    }
   }
 }

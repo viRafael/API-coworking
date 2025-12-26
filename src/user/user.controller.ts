@@ -7,7 +7,6 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UpdateUserDTO } from './dto/updateUser.user.dto';
 import { Roles } from 'src/common/decorators/role.decoretor';
@@ -15,8 +14,6 @@ import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
 import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 
-@ApiTags('User')
-@ApiBearerAuth()
 @Roles('USER')
 @Controller('/users')
 export class UserController {

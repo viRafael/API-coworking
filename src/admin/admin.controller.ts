@@ -5,19 +5,14 @@ import {
   Param,
   ParseUUIDPipe,
   Put,
+  UseGuards,
 } from '@nestjs/common';
-import { Roles } from 'src/common/decorators/role.decoretor';
 import { ReservationsService } from 'src/reservations/reservations.service';
 import { AdminService } from './admin.service';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
+import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
+import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
 
-@ApiTags('Admin')
-@ApiBearerAuth()
 @Controller('admin')
 export class AdminController {
   constructor(
@@ -26,43 +21,33 @@ export class AdminController {
   ) {}
 
   // Rota para listar todas as reservas
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Get('reservation')
-  @ApiOperation({ summary: 'Lista todas as reservas (admin)' })
-  @ApiResponse({ status: 200, description: 'Retorno com sucesso' })
-  @ApiResponse({
-    status: 409,
-    description: 'Error ao criar inserir na blaclist',
-  })
-  getAllReservation() {
-    return this.reservationService.getAllReservations();
+  getAllReservation(@TokenPayloadParam() tokenPayload: TokenPayloadDto) {
+    return this.reservationService.getAllReservations(tokenPayload);
   }
 
   // Rota para remover um reserva
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Delete(':id')
-  @ApiOperation({ summary: 'Remove uma reserva (admin)' })
-  @ApiResponse({ status: 200, description: 'Removida com sucesso' })
-  @ApiResponse({ status: 409, description: 'Error ao remover um reserva' })
-  deleteReservation(@Param('id', ParseUUIDPipe) reservationID: string) {
+  deleteReservation(
+    @Param('id', ParseUUIDPipe) reservationID: string,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+  ) {
     return this.reservationService.deleteReservationWithoutAuthenticadeUser(
       reservationID,
+      tokenPayload,
     );
   }
 
   // Rota para colocar um token na black list
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Put(':userID/:token')
-  @ApiOperation({ summary: 'Coloca um token recebido na black list (admin)' })
-  @ApiResponse({ status: 200, description: 'Adicionado com sucesso' })
-  @ApiResponse({
-    status: 409,
-    description: 'Error ao colocar o token na blaclist',
-  })
   putTokenOnBlacklist(
     @Param('userID', ParseUUIDPipe) userID: string,
     @Param('token') token: string,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    return this.adminService.putTokenOnBlaclist(userID, token);
+    return this.adminService.putTokenOnBlaclist(userID, token, tokenPayload);
   }
 }

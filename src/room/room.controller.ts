@@ -8,100 +8,65 @@ import {
   Patch,
   Post,
   Put,
-  UsePipes,
+  UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 import { RoomService } from './room.service';
 import { CreateRoomDTO } from './dto/create-room.dto';
 import { UpdateRoomDTO } from './dto/update-room.dto';
 import { UpdateStatusDTO } from './dto/update-status.dto';
-import { Roles } from 'src/common/decorators/role.decoretor';
-import { Public } from 'src/common/decorators/public.decoretor';
+import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
+import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
+import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
 
-@ApiTags('Room')
 @Controller('room')
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Post('')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Criar uma nova sala (Admin)' })
-  @ApiResponse({ status: 201, description: 'Sala criada com sucesso.' })
-  @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  create(@Body() createRoomDTO: CreateRoomDTO) {
-    return this.roomService.create(createRoomDTO);
+  create(
+    @Body() createRoomDTO: CreateRoomDTO,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+  ) {
+    return this.roomService.create(createRoomDTO, tokenPayload);
   }
 
-  @Public()
   @Get()
-  @ApiOperation({ summary: 'Listar todas as salas disponíveis' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de salas disponíveis retornada com sucesso.',
-  })
   getAllRoomsAvaible() {
     return this.roomService.getAllAvaible();
   }
 
-  @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Obter detalhes de uma sala específica' })
-  @ApiResponse({
-    status: 200,
-    description: 'Detalhes da sala retornados com sucesso.',
-  })
-  @ApiResponse({ status: 404, description: 'Sala não encontrada.' })
   getByID(@Param('id', ParseUUIDPipe) idRoom: string) {
     return this.roomService.getByID(idRoom);
   }
 
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Put(':id')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Atualizar uma sala (Admin)' })
-  @ApiResponse({ status: 200, description: 'Sala atualizada com sucesso.' })
-  @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 404, description: 'Sala não encontrada.' })
-  @UsePipes(UpdateRoomDTO)
   update(
     @Param('id', ParseUUIDPipe) idRoom: string,
     @Body() updateRoomDTO: UpdateRoomDTO,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    return this.roomService.update(idRoom, updateRoomDTO);
+    return this.roomService.update(idRoom, updateRoomDTO, tokenPayload);
   }
 
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Patch(':id/status')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Atualizar o status de uma sala (Admin)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Status da sala atualizado com sucesso.',
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 404, description: 'Sala não encontrada.' })
-  @UsePipes(UpdateStatusDTO)
   updateStatus(
     @Param('id', ParseUUIDPipe) idRoom: string,
     @Body() updateStatusDTO: UpdateStatusDTO,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    return this.roomService.updateStatus(idRoom, updateStatusDTO);
+    return this.roomService.updateStatus(idRoom, updateStatusDTO, tokenPayload);
   }
 
-  @Roles('ADMIN')
+  @UseGuards(AuthTokenGuard)
   @Delete(':id')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Deletar uma sala (Admin)' })
-  @ApiResponse({ status: 200, description: 'Sala deletada com sucesso.' })
-  @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 404, description: 'Sala não encontrada.' })
-  delete(@Param('id', ParseUUIDPipe) idRoom: string) {
-    return this.roomService.delete(idRoom);
+  delete(
+    @Param('id', ParseUUIDPipe) idRoom: string,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+  ) {
+    return this.roomService.delete(idRoom, tokenPayload);
   }
 }
