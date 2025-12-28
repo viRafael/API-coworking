@@ -11,6 +11,7 @@ import jwtConfig from '../config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { REQUEST_TOKEN_PAYLOAD_KEY } from '../auth.constants';
 import { TokenPayloadDto } from '../dto/token-payload.dto';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 
 @Injectable()
 export class AuthTokenGuard implements CanActivate {
@@ -18,6 +19,7 @@ export class AuthTokenGuard implements CanActivate {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -33,6 +35,21 @@ export class AuthTokenGuard implements CanActivate {
         token,
         this.jwtConfiguration,
       );
+
+      // Verificando se o User é ADMIN
+      const isAdmin = await this.prismaService.user.findUnique({
+        where: {
+          id: payload.sub,
+          role: 'ADMIN',
+        },
+      });
+
+      if (!isAdmin) {
+        payload['role'] = 'USER';
+      } else {
+        payload['role'] = 'ADMIN';
+      }
+
       request[REQUEST_TOKEN_PAYLOAD_KEY] = payload;
     } catch (error) {
       console.log(error);

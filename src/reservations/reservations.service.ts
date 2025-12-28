@@ -84,43 +84,12 @@ export class ReservationsService {
   }
 
   // Função para retornar todas as reservas
-  async getAllReservations(tokenPayload: TokenPayloadDto) {
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        id: tokenPayload.sub,
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User authenticado não encontrado');
-    }
-
-    if (user.role !== 'ADMIN') {
-      throw new UnauthorizedException('User authenticado não é ADMIN');
-    }
-
+  async getAllReservations() {
     return this.prismaService.reservation.findMany();
   }
 
   // Função para deletar
-  async deleteReservationWithoutAuthenticadeUser(
-    reservationID: string,
-    tokenPayload: TokenPayloadDto,
-  ) {
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        id: tokenPayload.sub,
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User authenticado não encontrado');
-    }
-
-    if (user.role !== 'ADMIN') {
-      throw new UnauthorizedException('User authenticado não é ADMIN');
-    }
-
+  async deleteReservationWithoutAuthenticadeUser(reservationID: string) {
     return this.prismaService.reservation.delete({
       where: {
         id: reservationID,

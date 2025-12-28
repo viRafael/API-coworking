@@ -14,21 +14,20 @@ import { RoomService } from './room.service';
 import { CreateRoomDTO } from './dto/create-room.dto';
 import { UpdateRoomDTO } from './dto/update-room.dto';
 import { UpdateStatusDTO } from './dto/update-status.dto';
-import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
-import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
+import { SetRoutePolicy } from 'src/auth/decorator/set-route-policy.decoretor';
+import { RoutePolicies } from 'src/auth/enum/route-policy.enum';
+import { RoutePolicyGuard } from 'src/auth/guards/route-policy.guards';
 
 @Controller('room')
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Post('')
-  create(
-    @Body() createRoomDTO: CreateRoomDTO,
-    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
-  ) {
-    return this.roomService.create(createRoomDTO, tokenPayload);
+  create(@Body() createRoomDTO: CreateRoomDTO) {
+    return this.roomService.create(createRoomDTO);
   }
 
   @Get()
@@ -41,32 +40,30 @@ export class RoomController {
     return this.roomService.getByID(idRoom);
   }
 
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) idRoom: string,
     @Body() updateRoomDTO: UpdateRoomDTO,
-    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    return this.roomService.update(idRoom, updateRoomDTO, tokenPayload);
+    return this.roomService.update(idRoom, updateRoomDTO);
   }
 
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Patch(':id/status')
   updateStatus(
     @Param('id', ParseUUIDPipe) idRoom: string,
     @Body() updateStatusDTO: UpdateStatusDTO,
-    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    return this.roomService.updateStatus(idRoom, updateStatusDTO, tokenPayload);
+    return this.roomService.updateStatus(idRoom, updateStatusDTO);
   }
 
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Delete(':id')
-  delete(
-    @Param('id', ParseUUIDPipe) idRoom: string,
-    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
-  ) {
-    return this.roomService.delete(idRoom, tokenPayload);
+  delete(@Param('id', ParseUUIDPipe) idRoom: string) {
+    return this.roomService.delete(idRoom);
   }
 }

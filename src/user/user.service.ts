@@ -53,7 +53,7 @@ export class UserService {
   }
 
   // Retorna os dados do usuário autenticado.
-  async getById(userId: string) {
+  getById(userId: string) {
     return this.prismaService.user.findUnique({
       where: {
         id: userId,

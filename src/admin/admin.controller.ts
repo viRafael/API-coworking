@@ -9,9 +9,10 @@ import {
 } from '@nestjs/common';
 import { ReservationsService } from 'src/reservations/reservations.service';
 import { AdminService } from './admin.service';
-import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
-import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
+import { SetRoutePolicy } from 'src/auth/decorator/set-route-policy.decoretor';
+import { RoutePolicies } from 'src/auth/enum/route-policy.enum';
+import { RoutePolicyGuard } from 'src/auth/guards/route-policy.guards';
 
 @Controller('admin')
 export class AdminController {
@@ -21,33 +22,31 @@ export class AdminController {
   ) {}
 
   // Rota para listar todas as reservas
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Get('reservation')
-  getAllReservation(@TokenPayloadParam() tokenPayload: TokenPayloadDto) {
-    return this.reservationService.getAllReservations(tokenPayload);
+  getAllReservation() {
+    return this.reservationService.getAllReservations();
   }
 
   // Rota para remover um reserva
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Delete(':id')
-  deleteReservation(
-    @Param('id', ParseUUIDPipe) reservationID: string,
-    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
-  ) {
+  deleteReservation(@Param('id', ParseUUIDPipe) reservationID: string) {
     return this.reservationService.deleteReservationWithoutAuthenticadeUser(
       reservationID,
-      tokenPayload,
     );
   }
 
   // Rota para colocar um token na black list
-  @UseGuards(AuthTokenGuard)
+  @SetRoutePolicy(RoutePolicies.ADMIN)
+  @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Put(':userID/:token')
   putTokenOnBlacklist(
     @Param('userID', ParseUUIDPipe) userID: string,
     @Param('token') token: string,
-    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    return this.adminService.putTokenOnBlaclist(userID, token, tokenPayload);
+    return this.adminService.putTokenOnBlaclist(userID, token);
   }
 }
