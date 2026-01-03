@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import jwtConfig from '../config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
-import { REQUEST_TOKEN_PAYLOAD_KEY } from '../auth.constants';
+import { REQUEST_TOKEN_PAYLOAD_KEY, ROLE_KEY } from '../auth.constants';
 import { TokenPayloadDto } from '../dto/token-payload.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 
@@ -45,14 +45,13 @@ export class AuthTokenGuard implements CanActivate {
       });
 
       if (!isAdmin) {
-        payload['role'] = 'USER';
+        payload[ROLE_KEY] = 'USER';
       } else {
-        payload['role'] = 'ADMIN';
+        payload[ROLE_KEY] = 'ADMIN';
       }
 
       request[REQUEST_TOKEN_PAYLOAD_KEY] = payload;
     } catch (error) {
-      console.log(error);
       throw new UnauthorizedException(error);
     }
 

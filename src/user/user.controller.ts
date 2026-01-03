@@ -13,30 +13,54 @@ import { Roles } from 'src/common/decorators/role.decoretor';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
 import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Roles('USER')
 @Controller('/users')
 export class UserController {
-  //Implementação de todas as rotas referentes ao Usuario
   constructor(private readonly userService: UserService) {}
 
-  // Rota para buscar um user pelo ID
+  @ApiOperation({ summary: 'Busca um usuário pelo ID' })
+  @ApiParam({ name: ':id', description: 'ID do usuário' })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado' })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @UseGuards(AuthTokenGuard)
-  @Get('me')
+  @Get('byId')
   getUserById(@Param(':id') userId: string) {
     return this.userService.getById(userId);
   }
 
-  // Rota para buscar um user pelo Email
+  @ApiOperation({ summary: 'Busca um usuário pelo Email' })
+  @ApiParam({ name: ':email', description: 'Email do usuário' })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado' })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @UseGuards(AuthTokenGuard)
-  @Get('me')
+  @Get('byEmail')
   getUserByEmail(@Param(':email') email: string) {
     return this.userService.getByEmail(email);
   }
 
-  // Rota para atualizar o user
+  @ApiOperation({ summary: 'Atualiza o usuário' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: ':id',
+    description:
+      'ID do usuário a ser atualizado (não utilizado na implementação atual)',
+  })
+  @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @UseGuards(AuthTokenGuard)
-  @Put('me')
+  @Put()
   updateUser(
     @Param(':id') userId: string,
     @Body() updateUserDto: UpdateUserDTO,
@@ -45,7 +69,12 @@ export class UserController {
     return this.userService.update(userId, updateUserDto, tokenPayload);
   }
 
-  // Rota para deletar um user
+  @ApiOperation({ summary: 'Deleta um usuário' })
+  @ApiBearerAuth()
+  @ApiParam({ name: ':id', description: 'ID do usuário a ser deletado' })
+  @ApiResponse({ status: 200, description: 'Usuário deletado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @UseGuards(AuthTokenGuard)
   @Delete(':id')
   deleteUser(

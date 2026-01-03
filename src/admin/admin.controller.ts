@@ -13,7 +13,15 @@ import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
 import { SetRoutePolicy } from 'src/auth/decorator/set-route-policy.decoretor';
 import { RoutePolicies } from 'src/auth/enum/route-policy.enum';
 import { RoutePolicyGuard } from 'src/auth/guards/route-policy.guards';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
   constructor(
@@ -21,6 +29,12 @@ export class AdminController {
     private readonly adminService: AdminService,
   ) {}
 
+  @ApiOperation({ summary: 'Retorna dos as reservas' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna a lista de reservas',
+  })
   // Rota para listar todas as reservas
   @SetRoutePolicy(RoutePolicies.ADMIN)
   @UseGuards(AuthTokenGuard, RoutePolicyGuard)
@@ -30,6 +44,21 @@ export class AdminController {
   }
 
   // Rota para remover um reserva
+  @ApiOperation({ summary: 'Remove uma reserva' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'Deleta a reserva com o ID compativel',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Reserva com o ID compativel não foi achada',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da reserva que deseja ser deletada',
+  })
   @SetRoutePolicy(RoutePolicies.ADMIN)
   @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Delete(':id')
@@ -40,6 +69,15 @@ export class AdminController {
   }
 
   // Rota para colocar um token na black list
+  @ApiOperation({ summary: 'Coloca um token na black list' })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'Coloca o token na black list',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @ApiParam({ name: 'userID', description: 'Id do usuario' })
+  @ApiParam({ name: 'token', description: 'Token do usuario' })
   @SetRoutePolicy(RoutePolicies.ADMIN)
   @UseGuards(AuthTokenGuard, RoutePolicyGuard)
   @Put(':userID/:token')

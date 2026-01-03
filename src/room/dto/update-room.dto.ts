@@ -4,25 +4,28 @@ import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateRoomDTO {
   @ApiProperty({
-    description: 'Pode ser alterado o nome da sala',
-    example: 'Quarto 12-3',
+    description: 'The name of the room.',
+    example: 'Conference Room B',
+    required: false,
   })
   @IsString()
   @IsNotEmpty()
   name?: string;
 
   @ApiProperty({
-    description: 'Pode ser alterado a descrição da sala',
-    example: 'Piso refeito',
+    description: 'A description of the room.',
+    example: 'A small meeting room.',
+    required: false,
   })
   @IsString()
   @IsNotEmpty()
   description?: string;
 
   @ApiProperty({
-    description: 'Alterar a estado atual da sala',
+    description: 'The status of the room.',
     enum: RoomStatus,
-    example: 'MAINTENANCE',
+    example: RoomStatus.MAINTENANCE,
+    required: false,
   })
   @IsEnum(RoomStatus)
   @IsNotEmpty()

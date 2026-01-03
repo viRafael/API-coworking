@@ -3,16 +3,16 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateUserDTO {
   @ApiProperty({
-    description: 'Nome no novo usuario',
-    example: 'Roberto Maxilius',
+    description: 'The name of the user.',
+    example: 'John Doe',
   })
   @IsNotEmpty()
   @IsString()
   name: string;
 
   @ApiProperty({
-    description: 'Email so usuario, será usado como identificador unico',
-    example: 'RobertoMaxilius@gmail.com',
+    description: 'The email of the user.',
+    example: 'user@example.com',
   })
   @IsNotEmpty()
   @IsString()
@@ -20,8 +20,8 @@ export class CreateUserDTO {
   email: string;
 
   @ApiProperty({
-    description: 'Senha de identificação do usuario',
-    example: 'sofrobullyporcausadomeunome',
+    description: 'The password of the user.',
+    example: 'password123',
   })
   @IsNotEmpty()
   @IsString()

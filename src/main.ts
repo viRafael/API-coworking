@@ -8,15 +8,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const config = new DocumentBuilder()
+  const documentBuilder = new DocumentBuilder()
     .setTitle('API - Reserva de salas')
-    .setDescription('Projeto final desenvolvino no PT-DEV em Backend da TITAN')
-    .setVersion('1.0')
+    .setDescription(
+      'Projeto NestJS iniciado no PT-DEV na TITAN e atualizado no decorrer dos estudos',
+    )
+    .setVersion('2.0')
     .addTag('PROJETO FINAL')
     .addBearerAuth()
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  const document = SwaggerModule.createDocument(app, documentBuilder);
+  SwaggerModule.setup('docs', app, document);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -35,7 +37,7 @@ bootstrap()
   .then(() => {
     console.log(
       `\n[PROJETO FINAL]: Servidor rodando em: http://localhost:${env.PORT}\n` +
-        `Documentação Swagger rodando em: http://localhost:${env.PORT}/api`,
+        `Documentação Swagger rodando em: http://localhost:${env.PORT}/docs`,
     );
   })
   .catch((error) => {

@@ -4,8 +4,8 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateReservationDTO {
   @ApiProperty({
-    description:
-      'ID da sala a qual a reserva se refere, o exemplo dependerá do banco de dados usado',
+    description: 'The ID of the room to be reserved.',
+    example: 'clxko26520000a4oopvnp6b3a',
   })
   @IsUUID()
   @IsString()
@@ -13,40 +13,40 @@ export class CreateReservationDTO {
   roomId: string;
 
   @ApiProperty({
-    description: 'Nome de identificação da reserva',
-    example: 'Reserva da sala 03',
+    description: 'The name of the reservation.',
+    example: 'Team Meeting',
   })
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @ApiProperty({
-    description: 'Refere-se informações extras sobre a reserva',
-    example: 'Reserva para a viagem de final de ano',
+    description: 'A description of the reservation.',
+    example: 'Weekly team sync.',
   })
   @IsString()
   @IsNotEmpty()
   description: string;
 
   @ApiProperty({
-    description: 'Data na qual a reserva foi criada',
-    example: '04/12/2025',
+    description: 'The date of the reservation.',
+    example: '2026-01-03T00:00:00.000Z',
   })
   @IsNotEmpty()
   @Type(() => Date)
   dateReservation: Date;
 
   @ApiProperty({
-    description: 'Data na qual a reserva da sala começa',
-    example: '12/12/2025',
+    description: 'The start time of the reservation.',
+    example: '2026-01-03T10:00:00.000Z',
   })
   @IsNotEmpty()
   @Type(() => Date)
   startTime: Date;
 
   @ApiProperty({
-    description: 'Data na qual a reserva da sala termina',
-    example: '24/12/2025',
+    description: 'The end time of the reservation.',
+    example: '2026-01-03T11:00:00.000Z',
   })
   @IsNotEmpty()
   @Type(() => Date)

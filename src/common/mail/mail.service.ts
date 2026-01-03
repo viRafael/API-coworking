@@ -34,12 +34,7 @@ export class MailService {
     });
   }
 
-  async sendMail(
-    to: string,
-    from?: string,
-    subject = 'Hello',
-    html?: string,
-  ): Promise<any> {
+  async sendMail(to: string, from?: string, subject = 'Hello', html?: string) {
     const info = await this.transporter.sendMail({
       from:
         from ||

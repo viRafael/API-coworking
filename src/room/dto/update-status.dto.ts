@@ -4,9 +4,9 @@ import { IsEnum, IsNotEmpty } from 'class-validator';
 
 export class UpdateStatusDTO {
   @ApiProperty({
-    description: 'Alterar a estado atual da sala',
+    description: 'The new status of the room.',
     enum: RoomStatus,
-    example: 'AVAIBLE',
+    example: RoomStatus.OCCUPIED,
   })
   @IsEnum(RoomStatus)
   @IsNotEmpty()

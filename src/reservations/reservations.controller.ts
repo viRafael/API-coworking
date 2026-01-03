@@ -8,21 +8,33 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDTO } from './dto/create-reservation';
 import { TokenPayloadParam } from 'src/auth/params/token-payload.param';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guards';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Reservations')
-@ApiBearerAuth()
 @Controller('reservations')
 export class ReservationsController {
-  // Implementação de todas as rotas referentes a Reservas
   constructor(private readonly reservationsService: ReservationsService) {}
 
-  // Rota de criação de uma reserva
+  @ApiOperation({ summary: 'Cria uma nova reserva' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 201, description: 'Reserva criada com sucesso' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflito de horário para a sala',
+  })
+  @UseGuards(AuthTokenGuard)
   @Post()
   create(
     @Body() createReservationsDTO: CreateReservationDTO,
@@ -31,32 +43,49 @@ export class ReservationsController {
     return this.reservationsService.create(createReservationsDTO, tokenPayload);
   }
 
-  // // Rota para listar todas as rotas do usuario authenticado
+  @ApiOperation({ summary: 'Lista todas as reservas do usuário autenticado' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Reservas listadas com sucesso' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @UseGuards(AuthTokenGuard)
   @Get()
-  getAllReservations(tokenPayload: TokenPayloadDto) {
+  getAllReservations(@TokenPayloadParam() tokenPayload: TokenPayloadDto) {
     return this.reservationsService.getAllUserReservations(tokenPayload);
   }
 
-  // Rota para pegar o historico de reserva do user autenticado
+  @ApiOperation({ summary: 'Retorna o histórico de reservas do usuário' })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Histórico retornado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @UseGuards(AuthTokenGuard)
   @Get('history')
   getHistory(@TokenPayloadParam() tokenPayload: TokenPayloadDto) {
     return this.reservationsService.getHistory(tokenPayload);
   }
 
-  // Rota para pegar detalhes de uma reserva especifica
+  @ApiOperation({ summary: 'Busca uma reserva pelo ID' })
+  @ApiParam({ name: 'id', description: 'ID da reserva' })
+  @ApiResponse({ status: 200, description: 'Reserva encontrada' })
+  @ApiResponse({ status: 404, description: 'Reserva não encontrada' })
   @Get(':id')
   getByID(@Param('id', ParseUUIDPipe) reservationID: string) {
     return this.reservationsService.getByID(reservationID);
   }
 
-  // Rota para cancelar um reserva do usuario autenticado(se faltarem mais de 24horas)
+  @ApiOperation({ summary: 'Cancela uma reserva' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', description: 'ID da reserva a ser cancelada' })
+  @ApiResponse({ status: 200, description: 'Reserva cancelada com sucesso' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
+  @ApiResponse({
+    status: 403,
+    description: 'Cancelamento não permitido (menos de 24h restantes)',
+  })
   @UseGuards(AuthTokenGuard)
   @Delete(':id')
   delete(
     @Param('id', ParseUUIDPipe) reservationID: string,
-    tokenPayload: TokenPayloadDto,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
     return this.reservationsService.deleteAutheticadeUser(
       tokenPayload,
