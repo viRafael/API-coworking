@@ -4,6 +4,7 @@ import { AppModule } from './app/app.module';
 import { env } from './utils/env-validator';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -28,7 +29,10 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+  if (env.NODE_ENV === 'production') {
+    app.use(helmet());
+    app.enableCors();
+  }
 
   await app.listen(env.PORT);
 }

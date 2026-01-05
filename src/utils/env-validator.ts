@@ -6,6 +6,7 @@ dotenv.config();
 interface EnvVars {
   PORT: number;
   DATABASE_URL: string;
+  NODE_ENV: string;
 
   JWT_SECRET: string;
   JWT_TOKEN_AUDIENCE: string;
@@ -24,6 +25,7 @@ interface EnvVars {
 const envSchema = Joi.object<EnvVars>({
   PORT: Joi.number().port().default(3000),
   DATABASE_URL: Joi.string().uri().required(),
+  NODE_ENV: Joi.string().required(),
   JWT_SECRET: Joi.string().required(),
   JWT_TOKEN_AUDIENCE: Joi.string().uri().required(),
   JWT_TOKEN_ISSUER: Joi.string().uri().required(),
